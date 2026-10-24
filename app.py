@@ -177,9 +177,14 @@ if st.session_state.get("transcript"):
     )
 
     st.divider()
-    st.subheader("✨ AI Video Insights")
+ st.subheader("✨ AI Video Insights")
 
-    if st.button("Generate summary and action points", type="primary"):
+summary_style = st.selectbox(
+    "Choose your summary style",
+    ["Short summary", "Detailed summary", "Business insights"]
+)
+
+if st.button("Generate summary and action points", type="primary"):
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             client = genai.Client(api_key=api_key)
