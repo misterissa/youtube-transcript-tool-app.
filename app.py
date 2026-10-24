@@ -196,7 +196,7 @@ Analyze the following YouTube transcript.
 
 Video title: {title}
 
-Create these sections:
+{style_instructions}
 1. SUMMARY: Explain the main message clearly.
 2. KEY TAKEAWAYS: List the most important ideas.
 3. ACTION POINTS: Give practical steps the viewer can apply.
