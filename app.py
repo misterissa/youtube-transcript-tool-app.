@@ -188,7 +188,28 @@ if st.button("Generate summary and action points", type="primary"):
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             client = genai.Client(api_key=api_key)
-
+            if summary_style == "Short summary":
+                style_instructions = """
+                Give a brief summary of the main message,
+                5 key takeaways, and 3 practical action points.
+                Keep the entire response concise.
+                """
+            elif summary_style == "Detailed summary":
+                style_instructions = """
+                Provide a detailed summary with explanations,
+                key takeaways, useful examples, important names
+                or figures, and practical action points.
+                Organize the response into clear sections.
+                """
+            else:
+                style_instructions = """
+                Analyze the video from a business perspective.
+                Explain the main business lessons, opportunities,
+                risks, customer experience implications, leadership
+                insights, and recommended actions. Avoid inventing
+                facts or assuming the video discusses business
+                when it does not.
+                """
             prompt = f"""
 You are a clear, practical research assistant.
 
