@@ -44,7 +44,9 @@ def clean_captions(file_path):
             or line == "WEBVTT"
             or "-->" in line
             or line.isdigit()
-            or line.startswith(("NOTE", "Kind:", "Language:"))
+            or line.startswith(
+                ("NOTE", "Kind:", "Language:")
+            )
         ):
             continue
 
@@ -62,11 +64,13 @@ def clean_captions(file_path):
 if st.button("Get transcript", type="primary"):
     if not url.strip():
         st.warning("Please paste a YouTube video link.")
+
     elif not re.match(
         r"^https?://(www\.)?(youtube\.com|youtu\.be)/",
         url.strip()
     ):
         st.error("Please enter a valid YouTube URL.")
+
     else:
         try:
             with st.spinner("Checking video captions..."):
@@ -97,6 +101,7 @@ if st.button("Get transcript", type="primary"):
                     ),
                     None
                 )
+
                 use_automatic = False
 
                 if not selected:
@@ -115,6 +120,7 @@ if st.button("Get transcript", type="primary"):
                         f"No captions found in {language}. "
                         "Try another language."
                     )
+
                 else:
                     download_options = {
                         "skip_download": True,
@@ -129,7 +135,9 @@ if st.button("Get transcript", type="primary"):
                         "overwrites": True,
                     }
 
-                    with yt_dlp.YoutubeDL(download_options) as ydl:
+                    with yt_dlp.YoutubeDL(
+                        download_options
+                    ) as ydl:
                         ydl.download([url.strip()])
 
                     files = (
@@ -139,9 +147,11 @@ if st.button("Get transcript", type="primary"):
 
                     if not files:
                         st.error(
-                            "Captions were found, but could not be "
-                            "downloaded. YouTube may be restricting access."
+                            "Captions were found, but could not "
+                            "be downloaded. YouTube may be "
+                            "restricting access."
                         )
+
                     else:
                         transcript = clean_captions(files[0])
 
@@ -149,25 +159,37 @@ if st.button("Get transcript", type="primary"):
                             st.session_state["transcript"] = transcript
                             st.session_state["video_title"] = title
                             st.session_state["video_id"] = video_id
-                            st.success(f"Transcript retrieved: {title}")
+                            st.session_state.pop("ai_result", None)
+
+                            st.success(
+                                f"Transcript retrieved: {title}"
+                            )
+
                         else:
                             st.error("The caption file was empty.")
 
         except Exception as exc:
             st.error(
-                "Could not retrieve captions. The video may not have "
-                "captions, or YouTube may be restricting cloud access."
+                "Could not retrieve captions. The video may not "
+                "have captions, or YouTube may be restricting "
+                "cloud access."
             )
             st.caption(f"Technical detail: {str(exc)[:300]}")
 
 
 if st.session_state.get("transcript"):
     transcript = st.session_state["transcript"]
-    title = st.session_state.get("video_title", "YouTube video")
+    title = st.session_state.get(
+        "video_title", "YouTube video"
+    )
     video_id = st.session_state.get("video_id", "video")
 
     st.subheader("Transcript")
-    st.text_area("Retrieved captions", transcript, height=300)
+    st.text_area(
+        "Retrieved captions",
+        transcript,
+        height=300
+    )
 
     st.download_button(
         "Download transcript (.txt)",
@@ -177,39 +199,60 @@ if st.session_state.get("transcript"):
     )
 
     st.divider()
- st.subheader("✨ AI Video Insights")
+    st.subheader("✨ AI Video Insights")
 
-summary_style = st.selectbox(
-    "Choose your summary style",
-    ["Short summary", "Detailed summary", "Business insights"]
-)
+    summary_style = st.selectbox(
+        "Choose your summary style",
+        [
+            "Short summary",
+            "Detailed summary",
+            "Business insights"
+        ]
+    )
 
-if st.button("Generate summary and action points", type="primary"):
+    if st.button(
+        "Generate summary and action points",
+        type="primary"
+    ):
         try:
             api_key = st.secrets["GEMINI_API_KEY"]
             client = genai.Client(api_key=api_key)
+
             if summary_style == "Short summary":
                 style_instructions = """
-                Give a brief summary of the main message,
-                5 key takeaways, and 3 practical action points.
-                Keep the entire response concise.
-                """
+Provide:
+1. A brief summary of the main message.
+2. Five key takeaways.
+3. Three practical action points.
+
+Keep the response concise and easy to read.
+"""
+
             elif summary_style == "Detailed summary":
                 style_instructions = """
-                Provide a detailed summary with explanations,
-                key takeaways, useful examples, important names
-                or figures, and practical action points.
-                Organize the response into clear sections.
-                """
+Provide:
+1. A detailed summary with clear explanations.
+2. The most important ideas and arguments.
+3. Useful examples, names, and figures.
+4. Practical action points.
+5. Important details or limitations.
+
+Organize the response into clear sections.
+"""
+
             else:
                 style_instructions = """
-                Analyze the video from a business perspective.
-                Explain the main business lessons, opportunities,
-                risks, customer experience implications, leadership
-                insights, and recommended actions. Avoid inventing
-                facts or assuming the video discusses business
-                when it does not.
-                """
+Analyze the video from a business perspective.
+
+Cover relevant business lessons, opportunities, risks,
+customer experience, leadership, commercial implications,
+and recommended actions.
+
+If the video is not about business, explain its most
+relevant practical lessons without inventing business
+connections or unsupported facts.
+"""
+
             prompt = f"""
 You are a clear, practical research assistant.
 
@@ -217,39 +260,46 @@ Analyze the following YouTube transcript.
 
 Video title: {title}
 
+Selected response style: {summary_style}
+
 {style_instructions}
-1. SUMMARY: Explain the main message clearly.
-2. KEY TAKEAWAYS: List the most important ideas.
-3. ACTION POINTS: Give practical steps the viewer can apply.
-4. IMPORTANT DETAILS: Include useful examples, names, or figures
-   mentioned in the transcript.
 
 Use concise, readable language. Do not invent facts.
-If the transcript is incomplete or unclear, say so.
+Distinguish information stated in the video from your
+own recommendations. If the transcript is incomplete
+or unclear, say so.
 
 TRANSCRIPT:
 {transcript[:100000]}
 """
 
-            with st.spinner("Gemini is analyzing the transcript..."):
+            with st.spinner(
+                "Gemini is analyzing the transcript..."
+            ):
                 response = client.models.generate_content(
                     model="gemini-3.8-flash",
                     contents=prompt
                 )
 
-            result = response.text or "The AI returned an empty response."
+            result = (
+                response.text
+                or "The AI returned an empty response."
+            )
 
             st.session_state["ai_result"] = result
+            st.session_state["ai_style"] = summary_style
 
         except Exception as exc:
             st.error(
-                "Could not generate the AI insights. Check that your "
-                "Gemini API key is valid and that API access is available."
+                "Could not generate the AI insights. Check that "
+                "your Gemini API key is valid and that API access "
+                "is available."
             )
             st.caption(f"Technical detail: {str(exc)[:300]}")
 
     if st.session_state.get("ai_result"):
         st.markdown(st.session_state["ai_result"])
+
         st.download_button(
             "Download AI insights (.txt)",
             data=st.session_state["ai_result"],
